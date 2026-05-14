@@ -176,7 +176,11 @@ with center_col[1]:
                 """
             )
 
-        st.divider()
+       st.divider()
 
-        st.subheader("📋 Input Summary")
-        st.dataframe(input_data, use_container_width=True)
+st.subheader("📋 Input Summary")
+
+summary_df = input_data.T
+summary_df.columns = ["Value"]
+
+st.table(summary_df)
