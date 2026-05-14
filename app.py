@@ -125,19 +125,24 @@ st.divider()
 # CREATE INPUT DATAFRAME
 # =========================
 
-input_data = pd.DataFrame({
-    'default': [default],
-    'housing': [housing],
-    'loan': [loan],
-    'previous': [previous],
-    'poutcome': [poutcome],
-    'emp.var.rate': [emp_var_rate],
-    'cons.price.idx': [cons_price_idx],
-    'cons.conf.idx': [cons_conf_idx],
-    'euribor3m': [euribor3m],
-    'age_group': [age_group],
-    'lead_type': [lead_type]
-})
+st.subheader("📋 Input Summary")
+
+summary_data = {
+    "Credit Default": default,
+    "Housing Loan": housing,
+    "Personal Loan": loan,
+    "Previous Contacts": previous,
+    "Previous Campaign Outcome": poutcome,
+    "Employment Variation Rate": emp_var_rate,
+    "Consumer Price Index": cons_price_idx,
+    "Consumer Confidence Index": cons_conf_idx,
+    "Euribor 3 Month Rate": euribor3m,
+    "Age Group": age_group,
+    "Lead Type": lead_type
+}
+
+for key, value in summary_data.items():
+    st.markdown(f"**{key}:** {value}")
 
 # =========================
 # PREDICTION BUTTON
