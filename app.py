@@ -11,177 +11,128 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# =========================
-# LOAD MODEL
-# =========================
-
+# Load trained RS-MB model
 model = joblib.load('rsmb_model.pkl')
 
-# =========================
-# PAGE CONFIGURATION
-# =========================
-
+# Page configuration
 st.set_page_config(
     page_title="Customer Subscription to Bank Term Deposits Predictor using RS-MB",
     page_icon="📈",
-    layout="wide"
+    layout="centered"
 )
 
-# =========================
-# TITLE
-# =========================
-
-st.title("📈 Customer Subscription Prediction using RS-MB")
+# Title
+st.title("📈 RS-MB Bank Marketing Prediction App")
 
 st.markdown("""
-This application predicts whether a client is likely to subscribe to a bank term deposit
+This application predicts whether a client is likely to subscribe to a term deposit
 using the RS-MB Hybrid Ensemble Model.
 """)
 
 st.divider()
 
 # =========================
-# TWO-COLUMN LAYOUT
+# USER INPUTS
 # =========================
 
-col1, col2 = st.columns(2)
+default = st.selectbox(
+    "Has Credit Default?",
+    ["yes", "no"]
+)
 
-# =========================
-# LEFT COLUMN
-# =========================
+housing = st.selectbox(
+    "Has Housing Loan?",
+    ["yes", "no"]
+)
 
-with col1:
+loan = st.selectbox(
+    "Has Personal Loan?",
+    ["yes", "no"]
+)
 
-    st.subheader("🏦 Customer Information")
+previous = st.number_input(
+    "Number of Previous Contacts",
+    min_value=0,
+    value=0,
+    step=1
+)
 
-    default = st.selectbox(
-        "Has Credit Default?",
-        ["yes", "no"]
-    )
+poutcome = st.selectbox(
+    "Previous Campaign Outcome",
+    ["Failure", "Nonexistent", "Success"]
+)
 
-    housing = st.selectbox(
-        "Has Housing Loan?",
-        ["yes", "no"]
-    )
+emp_var_rate = st.number_input(
+    "Employment Variation Rate",
+    value=1.1
+)
 
-    loan = st.selectbox(
-        "Has Personal Loan?",
-        ["yes", "no"]
-    )
+cons_price_idx = st.number_input(
+    "Consumer Price Index",
+    value=93.994
+)
 
-    previous = st.number_input(
-        "Number of Previous Contacts",
-        min_value=0,
-        value=0,
-        step=1
-    )
+cons_conf_idx = st.number_input(
+    "Consumer Confidence Index",
+    value=-36.4
+)
 
-    poutcome = st.selectbox(
-        "Previous Campaign Outcome",
-        ["failure", "nonexistent", "success"]
-    )
+euribor3m = st.number_input(
+    "Euribor 3 Month Rate",
+    value=4.857
+)
 
-# =========================
-# RIGHT COLUMN
-# =========================
+age_group = st.selectbox(
+    "Age Group",
+    ["Young", "Middle-aged", "Senior"]
+)
 
-with col2:
-
-    st.subheader("📊 Economic Indicators")
-
-    emp_var_rate = st.number_input(
-        "Employment Variation Rate",
-        value=1.1
-    )
-
-    cons_price_idx = st.number_input(
-        "Consumer Price Index",
-        value=93.994
-    )
-
-    cons_conf_idx = st.number_input(
-        "Consumer Confidence Index",
-        value=-36.4
-    )
-
-    euribor3m = st.number_input(
-        "Euribor 3 Month Rate",
-        value=4.857
-    )
-
-    age_group = st.selectbox(
-        "Age Group",
-        ["young", "middle-aged", "senior"]
-    )
-
-    lead_type = st.selectbox(
-        "Lead Type",
-        ["new", "existing"]
-    )
-
-st.divider()
+lead_type = st.selectbox(
+    "Lead Type",
+    ["New", "Existing"]
+)
 
 # =========================
 # CREATE INPUT DATAFRAME
 # =========================
 
-st.subheader("📋 Input Summary")
-
-summary_data = {
-    "Credit Default": default,
-    "Housing Loan": housing,
-    "Personal Loan": loan,
-    "Previous Contacts": previous,
-    "Previous Campaign Outcome": poutcome,
-    "Employment Variation Rate": emp_var_rate,
-    "Consumer Price Index": cons_price_idx,
-    "Consumer Confidence Index": cons_conf_idx,
-    "Euribor 3 Month Rate": euribor3m,
-    "Age Group": age_group,
-    "Lead Type": lead_type
-}
-
-for key, value in summary_data.items():
-    st.markdown(f"**{key}:** {value}")
+input_data = pd.DataFrame({
+    'default': [default],
+    'housing': [housing],
+    'loan': [loan],
+    'previous': [previous],
+    'poutcome': [poutcome],
+    'emp.var.rate': [emp_var_rate],
+    'cons.price.idx': [cons_price_idx],
+    'cons.conf.idx': [cons_conf_idx],
+    'euribor3m': [euribor3m],
+    'age_group': [age_group],
+    'lead_type': [lead_type]
+})
 
 # =========================
 # PREDICTION BUTTON
 # =========================
 
-center_col = st.columns([1, 2, 1])
+if st.button("Predict Subscription"):
 
-with center_col[1]:
+    prediction = model.predict(input_data)[0]
+    probability = model.predict_proba(input_data)[0][1]
 
-    if st.button("🔍 Predict Subscription", use_container_width=True):
+    st.subheader("Prediction Result")
 
-        prediction = model.predict(input_data)[0]
-        probability = model.predict_proba(input_data)[0][1]
+    if prediction == 1:
+        st.success(
+            f"✅ Client is LIKELY to subscribe "
+            f"({probability:.2%} probability)"
+        )
+    else:
+        st.error(
+            f"❌ Client is UNLIKELY to subscribe "
+            f"({probability:.2%} probability)"
+        )
 
-        st.divider()
+    st.divider()
 
-        st.subheader("📌 Prediction Result")
-
-        if prediction == 1:
-
-            st.success(
-                f"""
-                ✅ Client is LIKELY to subscribe
-
-                Probability of Subscription: {probability:.2%}
-                """
-            )
-
-        else:
-
-            st.error(
-                f"""
-                ❌ Client is UNLIKELY to subscribe
-
-                Probability of Subscription: {probability:.2%}
-                """
-            )
-
-        st.divider()
-
-        st.subheader("📋 Input Summary")
-        st.dataframe(input_data, use_container_width=True)
+    st.subheader("Input Summary")
+    st.write(input_data.T)
