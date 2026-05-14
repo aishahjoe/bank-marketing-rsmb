@@ -7,48 +7,176 @@ Original file is located at
     https://colab.research.google.com/drive/19z5PW6iSBjAQDJYgJzvRIEwyo1QmqooI
 """
 
+import streamlit as st
+import pandas as pd
+import joblib
+
+# =========================
+# LOAD MODEL
+# =========================
+
+model = joblib.load('rsmb_model.pkl')
+
+# =========================
+# PAGE CONFIGURATION
+# =========================
+
+st.set_page_config(
+    page_title="Customer Subscription to Bank Term Deposits Predictor using RS-MB",
+    page_icon="📈",
+    layout="wide"
+)
+
+# =========================
+# TITLE
+# =========================
+
+st.title("📈 Customer Subscription Prediction using RS-MB")
+
+st.markdown("""
+This application predicts whether a client is likely to subscribe to a bank term deposit
+using the RS-MB Hybrid Ensemble Model.
+""")
+
+st.divider()
+
+# =========================
+# TWO-COLUMN LAYOUT
+# =========================
+
+col1, col2 = st.columns(2)
+
+# =========================
+# LEFT COLUMN
+# =========================
+
+with col1:
+
+    st.subheader("🏦 Customer Information")
+
+    default = st.selectbox(
+        "Has Credit Default?",
+        ["yes", "no"]
+    )
+
+    housing = st.selectbox(
+        "Has Housing Loan?",
+        ["yes", "no"]
+    )
+
+    loan = st.selectbox(
+        "Has Personal Loan?",
+        ["yes", "no"]
+    )
+
+    previous = st.number_input(
+        "Number of Previous Contacts",
+        min_value=0,
+        value=0,
+        step=1
+    )
+
+    poutcome = st.selectbox(
+        "Previous Campaign Outcome",
+        ["failure", "nonexistent", "success"]
+    )
+
+# =========================
+# RIGHT COLUMN
+# =========================
+
+with col2:
+
+    st.subheader("📊 Economic Indicators")
+
+    emp_var_rate = st.number_input(
+        "Employment Variation Rate",
+        value=1.1
+    )
+
+    cons_price_idx = st.number_input(
+        "Consumer Price Index",
+        value=93.994
+    )
+
+    cons_conf_idx = st.number_input(
+        "Consumer Confidence Index",
+        value=-36.4
+    )
+
+    euribor3m = st.number_input(
+        "Euribor 3 Month Rate",
+        value=4.857
+    )
+
+    age_group = st.selectbox(
+        "Age Group",
+        ["young", "middle-aged", "senior"]
+    )
+
+    lead_type = st.selectbox(
+        "Lead Type",
+        ["new", "existing"]
+    )
+
+st.divider()
+
+# =========================
+# CREATE INPUT DATAFRAME
+# =========================
+
+input_data = pd.DataFrame({
+    'default': [default],
+    'housing': [housing],
+    'loan': [loan],
+    'previous': [previous],
+    'poutcome': [poutcome],
+    'emp.var.rate': [emp_var_rate],
+    'cons.price.idx': [cons_price_idx],
+    'cons.conf.idx': [cons_conf_idx],
+    'euribor3m': [euribor3m],
+    'age_group': [age_group],
+    'lead_type': [lead_type]
+})
+
 # =========================
 # PREDICTION BUTTON
 # =========================
 
-center_col = st.columns([1, 2, 1])
+if st.button("🔍 Predict Subscription", use_container_width=True):
 
-with center_col[1]:
+    prediction = model.predict(input_data)[0]
+    probability = model.predict_proba(input_data)[0][1]
 
-    if st.button("🔍 Predict Subscription", use_container_width=True):
+    st.divider()
 
-        prediction = model.predict(input_data)[0]
-        probability = model.predict_proba(input_data)[0][1]
+    st.subheader("📌 Prediction Result")
 
-        st.divider()
+    if prediction == 1:
 
-        st.subheader("📌 Prediction Result")
+        st.success(
+            f"""
+            ✅ Client is LIKELY to subscribe
 
-        if prediction == 1:
+            Probability of Subscription: {probability:.2%}
+            """
+        )
 
-            st.success(
-                f"""
-                ✅ Client is LIKELY to subscribe
+    else:
 
-                Probability of Subscription: {probability:.2%}
-                """
-            )
+        st.error(
+            f"""
+            ❌ Client is UNLIKELY to subscribe
 
-        else:
+            Probability of Subscription: {probability:.2%}
+            """
+        )
 
-            st.error(
-                f"""
-                ❌ Client is UNLIKELY to subscribe
+    st.divider()
 
-                Probability of Subscription: {probability:.2%}
-                """
-            )
+    st.subheader("📋 Input Summary")
 
-        st.divider()
+    summary_df = input_data.T
+    summary_df.columns = ["Value"]
 
-        st.subheader("📋 Input Summary")
-
-        summary_df = input_data.T
-        summary_df.columns = ["Value"]
-
-        st.table(summary_df)
+    st.table(summary_df)
