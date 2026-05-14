@@ -135,4 +135,4 @@ if st.button("Predict Subscription"):
     st.divider()
 
     st.subheader("Input Summary")
-    st.write(input_data.T)
+    st.write(input_data)
