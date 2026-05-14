@@ -11,160 +11,128 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# Load model
+# Load trained RS-MB model
 model = joblib.load('rsmb_model.pkl')
 
-# Page Title
-st.title("RS-MB Bank Marketing Prediction")
-
-st.write(
-    "Predict whether a customer will subscribe "
-    "to a term deposit."
+# Page configuration
+st.set_page_config(
+    page_title="RS-MB Bank Marketing Predictor",
+    page_icon="📈",
+    layout="centered"
 )
 
-# ======================
+# Title
+st.title("📈 RS-MB Bank Marketing Prediction App")
+
+st.markdown("""
+This application predicts whether a client is likely to subscribe to a term deposit
+using the RS-MB Hybrid Ensemble Model.
+""")
+
+st.divider()
+
+# =========================
 # USER INPUTS
-# ======================
-
-age = st.number_input("Age", 18, 100, 30)
-
-job = st.selectbox(
-    "Job",
-    [
-        'admin.',
-        'blue-collar',
-        'entrepreneur',
-        'housemaid',
-        'management',
-        'retired',
-        'self-employed',
-        'services',
-        'student',
-        'technician',
-        'unemployed'
-    ]
-)
-
-marital = st.selectbox(
-    "Marital Status",
-    ['married', 'single', 'divorced']
-)
-
-education = st.selectbox(
-    "Education",
-    [
-        'basic.4y',
-        'basic.6y',
-        'basic.9y',
-        'high.school',
-        'professional.course',
-        'university.degree'
-    ]
-)
+# =========================
 
 default = st.selectbox(
-    "Credit Default",
-    ['no', 'yes']
+    "Has Credit Default?",
+    ["no", "yes"]
 )
 
 housing = st.selectbox(
-    "Housing Loan",
-    ['no', 'yes']
+    "Has Housing Loan?",
+    ["no", "yes"]
 )
 
 loan = st.selectbox(
-    "Personal Loan",
-    ['no', 'yes']
-)
-
-contact = st.selectbox(
-    "Contact Type",
-    ['cellular', 'telephone']
-)
-
-campaign = st.number_input(
-    "Campaign Contacts",
-    1,
-    50,
-    1
+    "Has Personal Loan?",
+    ["no", "yes"]
 )
 
 previous = st.number_input(
-    "Previous Contacts",
-    0,
-    20,
-    0
+    "Number of Previous Contacts",
+    min_value=0,
+    value=0,
+    step=1
+)
+
+poutcome = st.selectbox(
+    "Previous Campaign Outcome",
+    ["failure", "nonexistent", "success"]
 )
 
 emp_var_rate = st.number_input(
     "Employment Variation Rate",
-    -5.0,
-    5.0,
-    1.1
+    value=1.1
 )
 
 cons_price_idx = st.number_input(
     "Consumer Price Index",
-    90.0,
-    100.0,
-    93.0
+    value=93.994
 )
 
 cons_conf_idx = st.number_input(
     "Consumer Confidence Index",
-    -60.0,
-    0.0,
-    -40.0
+    value=-36.4
 )
 
 euribor3m = st.number_input(
-    "Euribor 3M Rate",
-    0.0,
-    10.0,
-    4.0
+    "Euribor 3 Month Rate",
+    value=4.857
 )
 
-nr_employed = st.number_input(
-    "Number of Employees",
-    4000.0,
-    6000.0,
-    5000.0
+age_group = st.selectbox(
+    "Age Group",
+    ["young", "middle-aged", "senior"]
 )
 
-# ======================
-# PREDICTION
-# ======================
+lead_type = st.selectbox(
+    "Lead Type",
+    ["new", "existing"]
+)
 
-if st.button("Predict"):
+# =========================
+# CREATE INPUT DATAFRAME
+# =========================
 
-    input_data = pd.DataFrame({
-        'age': [age],
-        'job': [job],
-        'marital': [marital],
-        'education': [education],
-        'default': [default],
-        'housing': [housing],
-        'loan': [loan],
-        'contact': [contact],
-        'campaign': [campaign],
-        'previous': [previous],
-        'emp.var.rate': [emp_var_rate],
-        'cons.price.idx': [cons_price_idx],
-        'cons.conf.idx': [cons_conf_idx],
-        'euribor3m': [euribor3m],
-        'nr.employed': [nr_employed]
-    })
+input_data = pd.DataFrame({
+    'default': [default],
+    'housing': [housing],
+    'loan': [loan],
+    'previous': [previous],
+    'poutcome': [poutcome],
+    'emp.var.rate': [emp_var_rate],
+    'cons.price.idx': [cons_price_idx],
+    'cons.conf.idx': [cons_conf_idx],
+    'euribor3m': [euribor3m],
+    'age_group': [age_group],
+    'lead_type': [lead_type]
+})
+
+# =========================
+# PREDICTION BUTTON
+# =========================
+
+if st.button("Predict Subscription"):
 
     prediction = model.predict(input_data)[0]
     probability = model.predict_proba(input_data)[0][1]
 
+    st.subheader("Prediction Result")
+
     if prediction == 1:
         st.success(
-            f"Customer likely to subscribe "
-            f"({probability:.2%})"
+            f"✅ Client is LIKELY to subscribe "
+            f"({probability:.2%} probability)"
         )
     else:
         st.error(
-            f"Customer unlikely to subscribe "
-            f"({probability:.2%})"
+            f"❌ Client is UNLIKELY to subscribe "
+            f"({probability:.2%} probability)"
         )
+
+    st.divider()
+
+    st.subheader("Input Summary")
+    st.write(input_data)
